@@ -81,26 +81,6 @@ export const JourneyPage: React.FC<JourneyPageProps> = ({
 
   return (
     <div className="pb-24 pt-3 px-4 max-w-lg mx-auto space-y-4 animate-fadeIn">
-      {/* Top Header with Back Button */}
-      <div className="flex items-center justify-between">
-        {onBack ? (
-          <button
-            type="button"
-            onClick={onBack}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-cozy-parchment dark:bg-darkSurface-card border border-cozy-gold/30 hover:border-cozy-gold text-xs font-serif font-semibold text-cozy-forest dark:text-cozy-ivory shadow-xs transition-transform active:scale-95 cursor-pointer"
-          >
-            <ArrowLeft size={13} className="text-cozy-gold" />
-            <span>Back</span>
-          </button>
-        ) : (
-          <div />
-        )}
-        <span className="font-serif font-bold text-base text-cozy-forest dark:text-cozy-ivory">
-          My Journey & Rewards
-        </span>
-        <div className="w-12" />
-      </div>
-
       {/* 1. Header & Challenge Banner */}
       <div className="bg-gradient-to-br from-cozy-forest to-cozy-forestDark text-cozy-ivory rounded-3xl p-5 shadow-cozy-lg relative overflow-hidden">
         {/* Background Decorative Rings */}

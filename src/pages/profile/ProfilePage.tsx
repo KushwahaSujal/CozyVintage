@@ -14,11 +14,10 @@ import {
   Sparkles,
   Camera,
   Trash2,
-  Check,
   Save,
-  ArrowLeft,
+  Play,
 } from 'lucide-react';
-import { sounds } from '../../services/audio/soundEffects';
+import { sounds, type SoundStyle } from '../../services/audio/soundEffects';
 import { haptic } from '../../services/haptic/hapticFeedback';
 import { resizeImageToDataUrl } from '../../utils/imageUtils';
 import type { UserProfile, ChallengeCommitment } from '../../types';
@@ -40,12 +39,18 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   onResetAllData,
   onExportBackup,
   onImportBackup,
-  onBack,
 }) => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [name, setName] = useState<string>(user.name);
   const [avatar, setAvatar] = useState<string>(user.avatarId || '🌿');
   const [photoUrl, setPhotoUrl] = useState<string | undefined>(user.photoUrl);
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(user.soundEnabled ?? true);
+  const [soundStyle, setSoundStyle] = useState<SoundStyle>(
+    (user.soundStyle as SoundStyle) || sounds.getStyle()
+  );
+  const [vibrationEnabled, setVibrationEnabled] = useState<boolean>(
+    user.vibrationEnabled ?? true
+  );
   const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
   const [installPromptEvent, setInstallPromptEvent] = useState<unknown>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -93,17 +98,30 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   };
 
   const handleToggleSound = () => {
-    const enabled = !user.soundEnabled;
-    sounds.setEnabled(enabled);
-    if (enabled) sounds.playClick();
-    onUpdateUser({ ...user, soundEnabled: enabled });
+    const nextState = !soundEnabled;
+    setSoundEnabled(nextState);
+    sounds.setEnabled(nextState);
+    if (nextState) {
+      sounds.playClick();
+    }
+    onUpdateUser({ ...user, soundEnabled: nextState });
+  };
+
+  const handleChangeSoundStyle = (style: SoundStyle) => {
+    setSoundStyle(style);
+    sounds.setStyle(style);
+    sounds.testSound(style);
+    onUpdateUser({ ...user, soundStyle: style });
   };
 
   const handleToggleVibration = () => {
-    const enabled = !user.vibrationEnabled;
-    haptic.setEnabled(enabled);
-    if (enabled) haptic.medium();
-    onUpdateUser({ ...user, vibrationEnabled: enabled });
+    const nextState = !vibrationEnabled;
+    setVibrationEnabled(nextState);
+    haptic.setEnabled(nextState);
+    if (nextState) {
+      haptic.testVibrate();
+    }
+    onUpdateUser({ ...user, vibrationEnabled: nextState });
   };
 
   const handleToggleBiometric = async () => {
@@ -133,7 +151,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
         setPhotoUrl(resizedData);
         sounds.playClick();
         haptic.medium();
-        // Immediately persist
         onUpdateUser({ ...user, photoUrl: resizedData });
       } catch (err) {
         console.error('Failed to process image:', err);
@@ -171,26 +188,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
 
   return (
     <div className="pb-24 pt-3 px-4 max-w-lg mx-auto space-y-4 animate-fadeIn">
-      {/* Top Header with Back Button */}
-      <div className="flex items-center justify-between">
-        {onBack ? (
-          <button
-            type="button"
-            onClick={onBack}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-cozy-parchment dark:bg-darkSurface-card border border-cozy-gold/30 hover:border-cozy-gold text-xs font-serif font-semibold text-cozy-forest dark:text-cozy-ivory shadow-xs transition-transform active:scale-95 cursor-pointer"
-          >
-            <ArrowLeft size={13} className="text-cozy-gold" />
-            <span>Back</span>
-          </button>
-        ) : (
-          <div />
-        )}
-        <span className="font-serif font-bold text-base text-cozy-forest dark:text-cozy-ivory">
-          My Profile & Settings
-        </span>
-        <div className="w-12" />
-      </div>
-
       {/* 1. Profile Top Card with Device Photo Upload */}
       <div className="bg-gradient-to-br from-cozy-parchment to-cozy-parchmentDark/40 dark:from-darkSurface-card dark:to-darkSurface-bg border border-cozy-gold/40 rounded-3xl p-4.5 shadow-cozy flex items-center justify-between">
         <div className="flex items-center space-x-3.5">
@@ -213,7 +210,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               title="Upload photo from device"
-              className="absolute -bottom-1 -right-1 bg-cozy-forest hover:bg-cozy-forestDark text-white p-1.5 rounded-full shadow-md border border-cozy-ivory transition-transform active:scale-90"
+              className="absolute -bottom-1 -right-1 bg-cozy-forest hover:bg-cozy-forestDark text-white p-1.5 rounded-full shadow-md border border-cozy-ivory transition-transform active:scale-90 cursor-pointer"
             >
               <Camera size={12} />
             </button>
@@ -242,7 +239,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
         <button
           type="button"
           onClick={() => setIsEditing(!isEditing)}
-          className="text-xs bg-cozy-ivory dark:bg-darkSurface-card border border-cozy-gold/30 hover:border-cozy-gold px-3 py-1.5 rounded-xl font-semibold text-cozy-forestDark dark:text-cozy-ivory shadow-xs"
+          className="text-xs bg-cozy-ivory dark:bg-darkSurface-card border border-cozy-gold/30 hover:border-cozy-gold px-3 py-1.5 rounded-xl font-semibold text-cozy-forestDark dark:text-cozy-ivory shadow-xs cursor-pointer"
         >
           {isEditing ? 'Cancel' : 'Edit'}
         </button>
@@ -272,7 +269,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="bg-cozy-parchment dark:bg-darkSurface-bg border border-cozy-gold/40 hover:border-cozy-gold px-3 py-1.5 rounded-xl text-xs font-medium text-cozy-forest dark:text-cozy-ivory flex items-center gap-1.5 shadow-xs"
+                className="bg-cozy-parchment dark:bg-darkSurface-bg border border-cozy-gold/40 hover:border-cozy-gold px-3 py-1.5 rounded-xl text-xs font-medium text-cozy-forest dark:text-cozy-ivory flex items-center gap-1.5 shadow-xs cursor-pointer"
               >
                 <Camera size={13} className="text-cozy-gold" />
                 <span>Upload From Device</span>
@@ -281,7 +278,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                 <button
                   type="button"
                   onClick={handleRemovePhoto}
-                  className="text-xs text-red-600/80 hover:text-red-600 px-2 py-1 flex items-center gap-1"
+                  className="text-xs text-red-600/80 hover:text-red-600 px-2 py-1 flex items-center gap-1 cursor-pointer"
                 >
                   <Trash2 size={12} /> Remove
                 </button>
@@ -302,7 +299,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                     setAvatar(av);
                     sounds.playClick();
                   }}
-                  className={`text-xl p-2 rounded-xl border transition-transform ${
+                  className={`text-xl p-2 rounded-xl border transition-transform cursor-pointer ${
                     avatar === av
                       ? 'border-cozy-sage bg-cozy-sage/20 scale-105'
                       : 'border-cozy-parchmentDark'
@@ -318,7 +315,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
             <button
               type="button"
               onClick={handleSaveProfile}
-              className="bg-cozy-forest hover:bg-cozy-forestDark text-white text-xs font-serif font-bold px-4 py-2 rounded-xl shadow-xs flex items-center gap-1.5 transition-transform active:scale-95"
+              className="bg-cozy-forest hover:bg-cozy-forestDark text-white text-xs font-serif font-bold px-4 py-2 rounded-xl shadow-xs flex items-center gap-1.5 transition-transform active:scale-95 cursor-pointer"
             >
               <Save size={13} /> Save Changes
             </button>
@@ -345,7 +342,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
         <button
           type="button"
           onClick={handleInstallPWA}
-          className="bg-cozy-forest hover:bg-cozy-forestDark text-white text-xs font-serif font-bold px-3 py-1.5 rounded-xl shadow-xs"
+          className="bg-cozy-forest hover:bg-cozy-forestDark text-white text-xs font-serif font-bold px-3 py-1.5 rounded-xl shadow-xs cursor-pointer"
         >
           Install
         </button>
@@ -378,55 +375,93 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
           <button
             type="button"
             onClick={handleToggleTheme}
-            className="text-xs font-serif font-semibold bg-cozy-ivory dark:bg-darkSurface-bg border border-cozy-gold/40 px-3 py-1 rounded-xl shadow-xs text-cozy-forestDark dark:text-cozy-ivory"
+            className="text-xs font-serif font-semibold bg-cozy-ivory dark:bg-darkSurface-bg border border-cozy-gold/40 px-3 py-1 rounded-xl shadow-xs text-cozy-forestDark dark:text-cozy-ivory cursor-pointer"
           >
             {user.theme === 'vintage' ? 'Dark Mode' : 'Warm Mode'}
           </button>
         </div>
 
-        {/* Sound Effects Toggle */}
-        <div className="flex items-center justify-between py-1 border-t border-cozy-gold/20">
-          <div className="flex items-center space-x-2.5">
-            {user.soundEnabled ? (
-              <Volume2 size={17} className="text-cozy-forest dark:text-cozy-sage" />
-            ) : (
-              <VolumeX size={17} className="text-cozy-brown/60" />
-            )}
-            <div>
-              <div className="text-xs font-semibold text-cozy-forestDark dark:text-cozy-ivory">
-                Sound Effects
-              </div>
-              <div className="text-[10px] text-cozy-brown dark:text-darkSurface-textMuted">
-                Gentle chimes for water, study bulb, and XP claims
+        {/* Sound Effects Section with Multiple Themes */}
+        <div className="py-2 border-t border-cozy-gold/20 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2.5">
+              {soundEnabled ? (
+                <Volume2 size={17} className="text-cozy-forest dark:text-cozy-sage" />
+              ) : (
+                <VolumeX size={17} className="text-cozy-brown/60" />
+              )}
+              <div>
+                <div className="text-xs font-semibold text-cozy-forestDark dark:text-cozy-ivory">
+                  Sound Effects
+                </div>
+                <div className="text-[10px] text-cozy-brown dark:text-darkSurface-textMuted">
+                  {soundEnabled ? 'Enabled • Choose your favorite style below' : 'Muted'}
+                </div>
               </div>
             </div>
+
+            <button
+              type="button"
+              onClick={handleToggleSound}
+              className={`px-3 py-1 rounded-xl text-xs font-serif font-bold transition-all shadow-xs cursor-pointer ${
+                soundEnabled
+                  ? 'bg-cozy-forest text-white'
+                  : 'bg-cozy-parchmentDark/70 dark:bg-darkSurface-border text-cozy-brown/80'
+              }`}
+            >
+              {soundEnabled ? 'ON' : 'OFF'}
+            </button>
           </div>
 
-          <button
-            type="button"
-            onClick={handleToggleSound}
-            className={`w-10 h-5.5 rounded-full transition-colors relative ${
-              user.soundEnabled ? 'bg-cozy-sage' : 'bg-cozy-parchmentDark'
-            }`}
-          >
-            <span
-              className={`absolute top-0.5 w-4.5 h-4.5 bg-white rounded-full transition-transform ${
-                user.soundEnabled ? 'left-5' : 'left-0.5'
-              }`}
-            />
-          </button>
+          {/* Sound Themes Selector (Available when Sound is ON) */}
+          {soundEnabled && (
+            <div className="pt-1.5 space-y-2">
+              <div className="grid grid-cols-3 gap-1.5">
+                {[
+                  { id: 'vintage_bell' as const, label: '🔔 Bells', desc: 'Brass & Chimes' },
+                  { id: 'cozy_nature' as const, label: '🍃 Nature', desc: 'Wood & Rain' },
+                  { id: 'retro_arcade' as const, label: '🎮 Retro', desc: '8-Bit Pixel' },
+                ].map((st) => (
+                  <button
+                    key={st.id}
+                    type="button"
+                    onClick={() => handleChangeSoundStyle(st.id)}
+                    className={`p-2 rounded-xl border text-center transition-all cursor-pointer ${
+                      soundStyle === st.id
+                        ? 'border-cozy-gold bg-cozy-gold/25 dark:bg-cozy-gold/30 font-bold shadow-xs scale-102'
+                        : 'border-cozy-gold/30 bg-cozy-ivory dark:bg-darkSurface-bg opacity-75'
+                    }`}
+                  >
+                    <div className="text-xs text-cozy-forestDark dark:text-cozy-ivory">{st.label}</div>
+                    <div className="text-[9px] text-cozy-brown dark:text-darkSurface-textMuted">{st.desc}</div>
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => sounds.testSound(soundStyle)}
+                  className="text-[11px] font-serif font-semibold text-cozy-gold hover:text-cozy-goldDark flex items-center gap-1 cursor-pointer"
+                >
+                  <Play size={10} className="fill-cozy-gold" />
+                  <span>Play Sample Audio</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Haptic Vibration Toggle */}
-        <div className="flex items-center justify-between py-1 border-t border-cozy-gold/20">
+        {/* Haptic Vibration Toggle (Clean ON / OFF switch) */}
+        <div className="flex items-center justify-between py-2 border-t border-cozy-gold/20">
           <div className="flex items-center space-x-2.5">
-            <Vibrate size={17} className="text-cozy-gold" />
+            <Vibrate size={17} className={vibrationEnabled ? 'text-cozy-gold' : 'text-cozy-brown/60'} />
             <div>
               <div className="text-xs font-semibold text-cozy-forestDark dark:text-cozy-ivory">
-                Haptic Feedback
+                Haptic Vibration
               </div>
               <div className="text-[10px] text-cozy-brown dark:text-darkSurface-textMuted">
-                Subtle device tap on button presses
+                Tactile device vibration on buttons and mission completions
               </div>
             </div>
           </div>
@@ -434,20 +469,18 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
           <button
             type="button"
             onClick={handleToggleVibration}
-            className={`w-10 h-5.5 rounded-full transition-colors relative ${
-              user.vibrationEnabled ? 'bg-cozy-sage' : 'bg-cozy-parchmentDark'
+            className={`px-3 py-1 rounded-xl text-xs font-serif font-bold transition-all shadow-xs cursor-pointer ${
+              vibrationEnabled
+                ? 'bg-cozy-forest text-white'
+                : 'bg-cozy-parchmentDark/70 dark:bg-darkSurface-border text-cozy-brown/80'
             }`}
           >
-            <span
-              className={`absolute top-0.5 w-4.5 h-4.5 bg-white rounded-full transition-transform ${
-                user.vibrationEnabled ? 'left-5' : 'left-0.5'
-              }`}
-            />
+            {vibrationEnabled ? 'ON' : 'OFF'}
           </button>
         </div>
 
         {/* Biometric / Screen Lock */}
-        <div className="flex items-center justify-between py-1 border-t border-cozy-gold/20">
+        <div className="flex items-center justify-between py-2 border-t border-cozy-gold/20">
           <div className="flex items-center space-x-2.5">
             <Shield size={17} className="text-cozy-sageDark dark:text-cozy-sage" />
             <div>
@@ -463,15 +496,13 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
           <button
             type="button"
             onClick={handleToggleBiometric}
-            className={`w-10 h-5.5 rounded-full transition-colors relative ${
-              user.biometricLockEnabled ? 'bg-cozy-sage' : 'bg-cozy-parchmentDark'
+            className={`px-3 py-1 rounded-xl text-xs font-serif font-bold transition-all shadow-xs cursor-pointer ${
+              user.biometricLockEnabled
+                ? 'bg-cozy-forest text-white'
+                : 'bg-cozy-parchmentDark/70 dark:bg-darkSurface-border text-cozy-brown/80'
             }`}
           >
-            <span
-              className={`absolute top-0.5 w-4.5 h-4.5 bg-white rounded-full transition-transform ${
-                user.biometricLockEnabled ? 'left-5' : 'left-0.5'
-              }`}
-            />
+            {user.biometricLockEnabled ? 'ON' : 'OFF'}
           </button>
         </div>
       </div>
@@ -489,7 +520,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
           <button
             type="button"
             onClick={onExportBackup}
-            className="p-2.5 rounded-2xl bg-cozy-ivory dark:bg-darkSurface-bg border border-cozy-gold/30 hover:border-cozy-gold flex flex-col items-center justify-center text-xs font-semibold text-cozy-forestDark dark:text-cozy-ivory shadow-xs transition-all"
+            className="p-2.5 rounded-2xl bg-cozy-ivory dark:bg-darkSurface-bg border border-cozy-gold/30 hover:border-cozy-gold flex flex-col items-center justify-center text-xs font-semibold text-cozy-forestDark dark:text-cozy-ivory shadow-xs transition-all cursor-pointer"
           >
             <Download size={16} className="text-cozy-gold mb-1" />
             <span>Download Backup</span>
@@ -513,7 +544,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
             <button
               type="button"
               onClick={() => setShowResetConfirm(true)}
-              className="text-[11px] text-red-600/70 hover:text-red-600 inline-flex items-center gap-1 transition-colors"
+              className="text-[11px] text-red-600/70 hover:text-red-600 inline-flex items-center gap-1 transition-colors cursor-pointer"
             >
               <RotateCcw size={11} /> Reset App & Start Fresh
             </button>
@@ -526,14 +557,14 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                 <button
                   type="button"
                   onClick={onResetAllData}
-                  className="bg-red-600 text-white text-xs px-3 py-1 rounded-xl font-semibold"
+                  className="bg-red-600 text-white text-xs px-3 py-1 rounded-xl font-semibold cursor-pointer"
                 >
                   Yes, Reset
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowResetConfirm(false)}
-                  className="bg-gray-200 dark:bg-darkSurface-border text-xs px-3 py-1 rounded-xl"
+                  className="bg-gray-200 dark:bg-darkSurface-border text-xs px-3 py-1 rounded-xl cursor-pointer"
                 >
                   Cancel
                 </button>

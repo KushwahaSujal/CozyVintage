@@ -25,6 +25,7 @@ export interface UserProfile {
   biometricLockEnabled: boolean;
   pinLock?: string;
   soundEnabled: boolean;
+  soundStyle?: 'vintage_bell' | 'cozy_nature' | 'retro_arcade';
   vibrationEnabled: boolean;
   theme: 'vintage' | 'dark_forest';
 }

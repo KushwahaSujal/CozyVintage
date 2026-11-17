@@ -177,33 +177,18 @@ I can explain complex concepts step-by-step, review programming algorithms, help
 
   return (
     <div className="pb-24 pt-3 px-4 max-w-lg mx-auto flex flex-col h-[90vh] animate-fadeIn">
-      {/* Top Header with Back Button */}
+      {/* Top Controls: Model Status & AI Settings */}
       <div className="flex items-center justify-between mb-2">
-        {onBack ? (
-          <button
-            type="button"
-            onClick={onBack}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-cozy-parchment dark:bg-darkSurface-card border border-cozy-gold/30 hover:border-cozy-gold text-xs font-serif font-semibold text-cozy-forest dark:text-cozy-ivory shadow-xs transition-transform active:scale-95 cursor-pointer"
-          >
-            <ArrowLeft size={13} className="text-cozy-gold" />
-            <span>Back</span>
-          </button>
-        ) : (
-          <div />
-        )}
-
-        <div className="flex items-center space-x-1.5">
-          <Sparkles size={16} className="text-cozy-gold" />
-          <span className="font-serif font-bold text-base text-cozy-forest dark:text-cozy-ivory">
-            AI Study Companion
-          </span>
+        <div className="flex items-center space-x-1.5 text-xs text-cozy-brown dark:text-darkSurface-textMuted">
+          <Sparkles size={14} className="text-cozy-gold" />
+          <span>Ask anything or search visual diagrams</span>
         </div>
 
         {/* Settings / API Key Button */}
         <button
           type="button"
           onClick={() => setShowSettingsModal(true)}
-          className="text-xs bg-cozy-parchment dark:bg-darkSurface-card border border-cozy-gold/30 hover:border-cozy-gold px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 text-cozy-forestDark dark:text-cozy-ivory shadow-xs"
+          className="text-xs bg-cozy-parchment dark:bg-darkSurface-card border border-cozy-gold/30 hover:border-cozy-gold px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 text-cozy-forestDark dark:text-cozy-ivory shadow-xs cursor-pointer"
         >
           <Key size={12} className="text-cozy-gold" />
           <span>AI Settings</span>

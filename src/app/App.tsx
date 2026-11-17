@@ -62,6 +62,9 @@ export const App: React.FC = () => {
           const profile = existingUsers[0];
           setUser(profile);
           sounds.setEnabled(profile.soundEnabled);
+          if (profile.soundStyle) {
+            sounds.setStyle(profile.soundStyle);
+          }
           haptic.setEnabled(profile.vibrationEnabled);
 
           if (profile.theme === 'dark_forest') {
@@ -442,7 +445,17 @@ export const App: React.FC = () => {
       <TopBar
         showBack={currentTab !== 'home'}
         onBack={() => setCurrentTab('home')}
-        title="Cozy Vintage"
+        title={
+          currentTab === 'journey'
+            ? 'My Journey'
+            : currentTab === 'growth'
+            ? 'Growth & Analytics'
+            : currentTab === 'ai'
+            ? 'AI Companion'
+            : currentTab === 'profile'
+            ? 'My Profile'
+            : 'Cozy Vintage'
+        }
       />
 
       {/* Main Pages Switcher */}
