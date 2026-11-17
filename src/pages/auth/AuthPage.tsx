@@ -102,9 +102,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
     <div className="min-h-screen bg-[#F6F0E5] dark:bg-[#141C16] text-[#496354] dark:text-[#F2EDE4] flex flex-col justify-center items-center px-4 py-8 animate-fadeIn">
       {/* Brand & Emblem Header */}
       <div className="text-center mb-6 max-w-sm w-full">
-        <div className="w-14 h-14 rounded-2xl bg-cozy-parchment dark:bg-darkSurface-card border border-cozy-gold/40 flex items-center justify-center text-2xl mx-auto mb-3 shadow-xs">
-          🌿
-        </div>
+        <img
+          src="/icons/icon-192.png"
+          alt="Cozy Vintage Logo"
+          className="w-16 h-16 rounded-2xl mx-auto mb-3 shadow-cozy object-cover border border-cozy-gold/40"
+        />
         <h1 className="font-serif font-bold text-2xl text-cozy-forest dark:text-cozy-ivory">
           Cozy Vintage
         </h1>

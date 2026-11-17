@@ -40,7 +40,11 @@ export const TopBar: React.FC<TopBarProps> = ({
             </button>
           ) : (
             <div className="flex items-center space-x-1.5 select-none">
-              <span className="text-base">🌿</span>
+              <img
+                src="/icons/icon-192.png"
+                alt="Cozy Vintage"
+                className="w-5 h-5 rounded-md object-cover shadow-xs border border-cozy-gold/30"
+              />
               <span className="font-serif font-bold text-sm tracking-wide text-cozy-forest dark:text-cozy-ivory">
                 Cozy Vintage
               </span>

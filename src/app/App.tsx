@@ -373,9 +373,11 @@ export const App: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#F6F0E5] dark:bg-[#141C16] flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-16 h-16 rounded-3xl bg-cozy-sage/20 flex items-center justify-center text-3xl animate-bounce-subtle mb-4">
-          🌿
-        </div>
+        <img
+          src="/icons/icon-192.png"
+          alt="Cozy Vintage"
+          className="w-16 h-16 rounded-2xl animate-bounce-subtle mb-4 shadow-cozy border border-cozy-gold/30 object-cover"
+        />
         <h2 className="font-serif font-bold text-xl text-cozy-forest dark:text-cozy-ivory">
           Cozy Vintage
         </h2>

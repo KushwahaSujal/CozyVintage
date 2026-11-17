@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mascot/*.svg', 'icons/*.png'],
+      includeAssets: ['favicon.ico', 'favicon.png', 'apple-touch-icon.png', 'mascot/*.svg', 'icons/*.png', 'icons/*.jpeg'],
       manifest: {
         id: '/',
         name: 'Cozy Vintage — Personal Life Companion',
