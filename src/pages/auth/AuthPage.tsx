@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
-import { Mail, Lock, User as UserIcon, ArrowRight, Sparkles, AlertCircle, CheckCircle, Key } from 'lucide-react';
+import { Mail, Lock, User as UserIcon, ArrowRight, AlertCircle, CheckCircle } from 'lucide-react';
 import {
   signInWithEmail,
   signUpWithEmail,
-  isSupabaseConfigured,
-  saveSupabaseConfig,
-  getSupabaseConfig,
 } from '../../services/supabase/supabaseClient';
 import { sounds } from '../../services/audio/soundEffects';
 import { haptic } from '../../services/haptic/hapticFeedback';
@@ -24,12 +21,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-
-  // Optional Supabase credentials drawer for quick input
-  const [showConfigDrawer, setShowConfigDrawer] = useState<boolean>(false);
-  const initialConfig = getSupabaseConfig();
-  const [customUrl, setCustomUrl] = useState<string>(initialConfig.url);
-  const [customKey, setCustomKey] = useState<string>(initialConfig.key);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +49,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
 
     try {
       if (isSignUp) {
-        const { user, error } = await signUpWithEmail(email.trim(), password, name.trim());
+        const { user, session, error, confirmationRequired } = await signUpWithEmail(
+          email.trim(),
+          password,
+          name.trim()
+        );
         if (error) {
           setErrorMsg(error);
           setIsLoading(false);
@@ -66,6 +61,18 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
         }
         sounds.playFanfare();
         haptic.celebrate();
+
+        if (confirmationRequired) {
+          setSuccessMsg(
+            'Account registered! Please check your email to confirm your account, then sign in.'
+          );
+          setIsLoading(false);
+          setTimeout(() => {
+            setIsSignUp(false);
+          }, 2500);
+          return;
+        }
+
         setSuccessMsg('Account created successfully!');
         setTimeout(() => {
           onAuthSuccess(email.trim(), name.trim() || email.split('@')[0]);
@@ -89,15 +96,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleSaveKeys = (e: React.FormEvent) => {
-    e.preventDefault();
-    saveSupabaseConfig(customUrl, customKey);
-    sounds.playClick();
-    haptic.medium();
-    setShowConfigDrawer(false);
-    setSuccessMsg('Supabase credentials saved successfully!');
   };
 
   return (
@@ -254,57 +252,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
             <ArrowRight size={14} />
           </button>
         </form>
-
-        {/* Supabase Key Quick Config Toggle */}
-        <div className="mt-5 pt-3 border-t border-cozy-gold/20 flex items-center justify-between text-[11px] text-cozy-brown/80 dark:text-darkSurface-textMuted">
-          <span className="flex items-center gap-1">
-            <span className={`w-2 h-2 rounded-full ${isSupabaseConfigured() ? 'bg-green-500' : 'bg-amber-500'}`} />
-            {isSupabaseConfigured() ? 'Supabase Connected' : 'Supabase Config'}
-          </span>
-
-          <button
-            type="button"
-            onClick={() => setShowConfigDrawer(!showConfigDrawer)}
-            className="text-cozy-gold hover:text-cozy-goldDark font-semibold flex items-center gap-1 cursor-pointer"
-          >
-            <Key size={11} />
-            <span>{showConfigDrawer ? 'Hide' : 'Configure Keys'}</span>
-          </button>
-        </div>
-
-        {/* Drawer for entering Supabase Project URL & Anon Key */}
-        {showConfigDrawer && (
-          <form onSubmit={handleSaveKeys} className="mt-3 p-3 rounded-2xl bg-cozy-parchment/60 dark:bg-darkSurface-bg/70 border border-cozy-gold/30 space-y-2.5 text-xs animate-fadeIn">
-            <div>
-              <label className="text-[11px] font-semibold block">Supabase Project URL</label>
-              <input
-                type="url"
-                required
-                placeholder="https://xyz.supabase.co"
-                value={customUrl}
-                onChange={(e) => setCustomUrl(e.target.value)}
-                className="w-full mt-1 px-2.5 py-1.5 rounded-lg border border-cozy-gold/30 bg-white dark:bg-darkSurface-card text-[11px]"
-              />
-            </div>
-            <div>
-              <label className="text-[11px] font-semibold block">Supabase Anon Key</label>
-              <input
-                type="password"
-                required
-                placeholder="eyJhbGci..."
-                value={customKey}
-                onChange={(e) => setCustomKey(e.target.value)}
-                className="w-full mt-1 px-2.5 py-1.5 rounded-lg border border-cozy-gold/30 bg-white dark:bg-darkSurface-card text-[11px]"
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full bg-cozy-gold hover:bg-cozy-goldLight text-white font-serif font-semibold py-1.5 rounded-lg text-xs"
-            >
-              Save Supabase Credentials
-            </button>
-          </form>
-        )}
       </div>
     </div>
   );

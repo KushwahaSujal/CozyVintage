@@ -2,9 +2,8 @@ import { createClient, type SupabaseClient, type User, type Session } from '@sup
 
 // Retrieve keys from environment variables or localStorage overrides
 export function getSupabaseConfig(): { url: string; key: string } {
-  const metaEnv = (import.meta as unknown as { env?: Record<string, string | undefined> })?.env;
-  let url = metaEnv?.VITE_SUPABASE_URL || '';
-  let key = metaEnv?.VITE_SUPABASE_ANON_KEY || '';
+  let url = import.meta.env.VITE_SUPABASE_URL || '';
+  let key = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
   if (typeof window !== 'undefined') {
     const localUrl = localStorage.getItem('cozy_supabase_url');
@@ -55,48 +54,42 @@ export function getSupabase(): SupabaseClient | null {
 }
 
 // Auth Helper Functions
-export async function signInWithEmail(email: string, password: string): Promise<{ user: User | null; session: Session | null; error: string | null }> {
+export async function signInWithEmail(
+  email: string,
+  password: string
+): Promise<{ user: User | null; session: Session | null; error: string | null }> {
   const client = getSupabase();
 
   if (!client || !isSupabaseConfigured()) {
-    // Demo / Offline fallback session until keys are provided
-    if (password.length >= 6) {
-      const demoUser: User = {
-        id: `local_user_${Date.now()}`,
-        email,
-        app_metadata: {},
-        user_metadata: { name: email.split('@')[0] },
-        aud: 'authenticated',
-        created_at: new Date().toISOString(),
-      };
-      localStorage.setItem('cozy_demo_auth_user', JSON.stringify(demoUser));
-      return { user: demoUser, session: null, error: null };
-    }
-    return { user: null, session: null, error: 'Password must be at least 6 characters.' };
+    return {
+      user: null,
+      session: null,
+      error: 'Supabase is not configured. Please check your .env credentials.',
+    };
   }
 
   const { data, error } = await client.auth.signInWithPassword({ email, password });
   return { user: data.user, session: data.session, error: error ? error.message : null };
 }
 
-export async function signUpWithEmail(email: string, password: string, name?: string): Promise<{ user: User | null; session: Session | null; error: string | null }> {
+export async function signUpWithEmail(
+  email: string,
+  password: string,
+  name?: string
+): Promise<{
+  user: User | null;
+  session: Session | null;
+  error: string | null;
+  confirmationRequired?: boolean;
+}> {
   const client = getSupabase();
 
   if (!client || !isSupabaseConfigured()) {
-    // Demo / Offline fallback session until keys are provided
-    if (password.length >= 6) {
-      const demoUser: User = {
-        id: `local_user_${Date.now()}`,
-        email,
-        app_metadata: {},
-        user_metadata: { name: name || email.split('@')[0] },
-        aud: 'authenticated',
-        created_at: new Date().toISOString(),
-      };
-      localStorage.setItem('cozy_demo_auth_user', JSON.stringify(demoUser));
-      return { user: demoUser, session: null, error: null };
-    }
-    return { user: null, session: null, error: 'Password must be at least 6 characters.' };
+    return {
+      user: null,
+      session: null,
+      error: 'Supabase is not configured. Please check your .env credentials.',
+    };
   }
 
   const { data, error } = await client.auth.signUp({
@@ -109,7 +102,18 @@ export async function signUpWithEmail(email: string, password: string, name?: st
     },
   });
 
-  return { user: data.user, session: data.session, error: error ? error.message : null };
+  if (error) {
+    return { user: null, session: null, error: error.message };
+  }
+
+  const confirmationRequired = !data.session;
+
+  return {
+    user: data.user,
+    session: data.session,
+    error: null,
+    confirmationRequired,
+  };
 }
 
 export async function signOutUser(): Promise<{ error: string | null }> {
@@ -134,16 +138,6 @@ export async function getActiveSession(): Promise<{ user: User | null }> {
       }
     } catch {
       // Fallback
-    }
-  }
-
-  // Check demo fallback session
-  if (typeof window !== 'undefined') {
-    const demo = localStorage.getItem('cozy_demo_auth_user');
-    if (demo) {
-      try {
-        return { user: JSON.parse(demo) };
-      } catch {}
     }
   }
 
