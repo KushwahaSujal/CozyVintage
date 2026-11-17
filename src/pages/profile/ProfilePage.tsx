@@ -16,6 +16,7 @@ import {
   Trash2,
   Save,
   Play,
+  LogOut,
 } from 'lucide-react';
 import { sounds, type SoundStyle } from '../../services/audio/soundEffects';
 import { haptic } from '../../services/haptic/hapticFeedback';
@@ -30,6 +31,7 @@ interface ProfilePageProps {
   onExportBackup: () => void;
   onImportBackup: (jsonString: string) => void;
   onBack?: () => void;
+  onLogout?: () => void;
 }
 
 export const ProfilePage: React.FC<ProfilePageProps> = ({
@@ -39,6 +41,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   onResetAllData,
   onExportBackup,
   onImportBackup,
+  onLogout,
 }) => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [name, setName] = useState<string>(user.name);
@@ -573,6 +576,29 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
           )}
         </div>
       </div>
+
+      {/* 5. Account & Sign Out */}
+      {onLogout && (
+        <div className="bg-cozy-parchment/60 dark:bg-darkSurface-card border border-cozy-gold/30 rounded-3xl p-4 shadow-cozy flex items-center justify-between">
+          <div>
+            <div className="font-serif font-bold text-xs text-cozy-forest dark:text-cozy-ivory">
+              Active Account
+            </div>
+            <div className="text-[10px] text-cozy-brown dark:text-darkSurface-textMuted">
+              Signed in as {user.name}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onLogout}
+            className="bg-cozy-parchmentDark/40 dark:bg-darkSurface-bg border border-cozy-gold/40 hover:border-cozy-gold text-cozy-forest dark:text-cozy-ivory px-3.5 py-1.5 rounded-xl text-xs font-serif font-semibold flex items-center gap-1.5 shadow-xs transition-transform active:scale-95 cursor-pointer"
+          >
+            <LogOut size={13} className="text-cozy-gold" />
+            <span>Log Out</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 };

@@ -8,6 +8,7 @@ import type { UserProfile, ChallengeCommitment } from '../../types';
 
 interface OnboardingWizardProps {
   onComplete: (user: UserProfile, challenge: ChallengeCommitment) => void;
+  initialName?: string;
 }
 
 const INTEREST_TAGS = [
@@ -34,11 +35,11 @@ const GOAL_TAGS = [
 
 const AVATAR_OPTIONS = ['🌿', '🦊', '🦉', '🧙‍♂️', '⚔️', '✨', '📖', '🌟'];
 
-export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }) => {
+export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete, initialName }) => {
   const [step, setStep] = useState<number>(1);
 
   // Step 1: About You
-  const [name, setName] = useState<string>('');
+  const [name, setName] = useState<string>(initialName || '');
   const [avatar, setAvatar] = useState<string>('🌿');
   const [photoUrl, setPhotoUrl] = useState<string | undefined>(undefined);
   const [dob, setDob] = useState<string>('');

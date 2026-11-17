@@ -19,6 +19,8 @@ import { JourneyPage } from '../pages/journey/JourneyPage';
 import { GrowthPage } from '../pages/growth/GrowthPage';
 import { AICompanionPage } from '../pages/ai-companion/AICompanionPage';
 import { ProfilePage } from '../pages/profile/ProfilePage';
+import { AuthPage } from '../pages/auth/AuthPage';
+import { getActiveSession, signOutUser } from '../services/supabase/supabaseClient';
 import { Shield, Sparkles, X, Lock } from 'lucide-react';
 import type {
   UserProfile,
@@ -34,6 +36,7 @@ import type {
 export const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [currentTab, setCurrentTab] = useState<NavigationTab>('home');
+  const [authSession, setAuthSession] = useState<{ email: string; name?: string } | null>(null);
 
   // Core State
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -53,10 +56,18 @@ export const App: React.FC = () => {
   // In-app notifications
   const [activeNotifications, setActiveNotifications] = useState<InAppNotification[]>([]);
 
-  // 1. Initial Load from IndexedDB
+  // 1. Initial Load from IndexedDB & Supabase
   useEffect(() => {
     async function loadData() {
       try {
+        const session = await getActiveSession();
+        if (session?.user?.email) {
+          setAuthSession({
+            email: session.user.email,
+            name: (session.user.user_metadata?.name as string) || session.user.email.split('@')[0],
+          });
+        }
+
         const existingUsers = await db.user.toArray();
         if (existingUsers.length > 0) {
           const profile = existingUsers[0];
@@ -350,6 +361,15 @@ export const App: React.FC = () => {
     setIsLocked(false);
   };
 
+  // Sign out
+  const handleLogout = async () => {
+    sounds.playClick();
+    haptic.light();
+    await signOutUser();
+    setAuthSession(null);
+    setCurrentTab('home');
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#F6F0E5] dark:bg-[#141C16] flex flex-col items-center justify-center p-6 text-center">
@@ -366,9 +386,21 @@ export const App: React.FC = () => {
     );
   }
 
-  // If no user exists, display Onboarding
+  // 1. If not authenticated, display clean Auth Page
+  if (!authSession) {
+    return (
+      <AuthPage
+        onAuthSuccess={(email, name) => {
+          setAuthSession({ email, name });
+          sounds.playClick();
+        }}
+      />
+    );
+  }
+
+  // 2. If no user profile exists in db, display Onboarding
   if (!user || !challenge) {
-    return <OnboardingWizard onComplete={handleOnboardingComplete} />;
+    return <OnboardingWizard initialName={authSession.name} onComplete={handleOnboardingComplete} />;
   }
 
   // If Biometric Lock is Active
@@ -528,6 +560,7 @@ export const App: React.FC = () => {
             onExportBackup={handleExportBackup}
             onImportBackup={handleImportBackup}
             onBack={() => setCurrentTab('home')}
+            onLogout={handleLogout}
           />
         )}
       </main>
