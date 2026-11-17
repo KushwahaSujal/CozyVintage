@@ -18,6 +18,7 @@ import {
   Scale,
   ShieldCheck,
   Download,
+  ArrowLeft,
 } from 'lucide-react';
 import { askAI } from '../../services/ai/aiService';
 import { searchImages } from '../../services/image-search/imageSearchService';
@@ -31,6 +32,7 @@ interface AICompanionPageProps {
   challengeDay: number;
   totalStudyMinutes: number;
   completionRate: number;
+  onBack?: () => void;
 }
 
 export const AICompanionPage: React.FC<AICompanionPageProps> = ({
@@ -38,6 +40,7 @@ export const AICompanionPage: React.FC<AICompanionPageProps> = ({
   challengeDay,
   totalStudyMinutes,
   completionRate,
+  onBack,
 }) => {
   const [activeTab, setActiveTab] = useState<'chat' | 'images'>('chat');
   const [thinkingMode, setThinkingMode] = useState<'fast' | 'balanced' | 'deep'>('balanced');
@@ -173,35 +176,37 @@ I can explain complex concepts step-by-step, review programming algorithms, help
   };
 
   return (
-    <div className="pb-24 pt-4 px-4 max-w-lg mx-auto flex flex-col h-[90vh]">
-      {/* Header & Subtabs */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-xl bg-cozy-gold/20 flex items-center justify-center text-cozy-gold">
-            <Sparkles size={18} />
-          </div>
-          <div>
-            <h2 className="font-serif font-bold text-lg text-cozy-forest dark:text-cozy-ivory leading-tight">
-              AI Companion
-            </h2>
-            <p className="text-[10px] text-cozy-brown dark:text-darkSurface-textMuted">
-              {aiSettings.provider === 'gemini' && aiSettings.geminiApiKey
-                ? 'Connected to Gemini API'
-                : aiSettings.provider === 'openai' && aiSettings.openaiApiKey
-                ? 'Connected to OpenAI'
-                : 'Cozy Vintage Intellect Engine'}
-            </p>
-          </div>
+    <div className="pb-24 pt-3 px-4 max-w-lg mx-auto flex flex-col h-[90vh] animate-fadeIn">
+      {/* Top Header with Back Button */}
+      <div className="flex items-center justify-between mb-2">
+        {onBack ? (
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-cozy-parchment dark:bg-darkSurface-card border border-cozy-gold/30 hover:border-cozy-gold text-xs font-serif font-semibold text-cozy-forest dark:text-cozy-ivory shadow-xs transition-transform active:scale-95 cursor-pointer"
+          >
+            <ArrowLeft size={13} className="text-cozy-gold" />
+            <span>Back</span>
+          </button>
+        ) : (
+          <div />
+        )}
+
+        <div className="flex items-center space-x-1.5">
+          <Sparkles size={16} className="text-cozy-gold" />
+          <span className="font-serif font-bold text-base text-cozy-forest dark:text-cozy-ivory">
+            AI Study Companion
+          </span>
         </div>
 
         {/* Settings / API Key Button */}
         <button
           type="button"
           onClick={() => setShowSettingsModal(true)}
-          className="text-xs bg-cozy-parchment dark:bg-darkSurface-card border border-cozy-gold/30 hover:border-cozy-gold px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 text-cozy-forestDark dark:text-cozy-ivory"
+          className="text-xs bg-cozy-parchment dark:bg-darkSurface-card border border-cozy-gold/30 hover:border-cozy-gold px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 text-cozy-forestDark dark:text-cozy-ivory shadow-xs"
         >
-          <Key size={13} className="text-cozy-gold" />
-          <span>Config AI</span>
+          <Key size={12} className="text-cozy-gold" />
+          <span>AI Settings</span>
         </button>
       </div>
 
@@ -519,12 +524,12 @@ I can explain complex concepts step-by-step, review programming algorithms, help
             </div>
 
             <p className="text-xs text-cozy-brown dark:text-darkSurface-textMuted mb-4">
-              Bring your own free API key (stored safely in your local browser only) or use our built-in offline mentor.
+              Add your personal API key for extended models, or use the built-in companion right away.
             </p>
 
             <div className="space-y-3 mb-4">
               <div>
-                <label className="text-xs font-semibold">Active AI Provider</label>
+                <label className="text-xs font-semibold">Active AI Model</label>
                 <select
                   value={aiSettings.provider}
                   onChange={(e) =>
@@ -536,7 +541,7 @@ I can explain complex concepts step-by-step, review programming algorithms, help
                   className="w-full mt-1 px-3 py-2 rounded-xl border border-cozy-gold/40 bg-white dark:bg-darkSurface-bg text-xs"
                 >
                   <option value="gemini">Google Gemini (Recommended)</option>
-                  <option value="openai">OpenAI (ChatGPT / GPT-4o)</option>
+                  <option value="openai">OpenAI (ChatGPT)</option>
                 </select>
               </div>
 
@@ -545,7 +550,7 @@ I can explain complex concepts step-by-step, review programming algorithms, help
                   <label className="text-xs font-semibold">Google Gemini API Key</label>
                   <input
                     type="password"
-                    placeholder="AIzaSy..."
+                    placeholder="Enter key (or leave empty for built-in)"
                     value={aiSettings.geminiApiKey}
                     onChange={(e) =>
                       setAiSettings({ ...aiSettings, geminiApiKey: e.target.value })
@@ -553,7 +558,7 @@ I can explain complex concepts step-by-step, review programming algorithms, help
                     className="w-full mt-1 px-3 py-2 rounded-xl border border-cozy-gold/40 bg-white dark:bg-darkSurface-bg text-xs"
                   />
                   <span className="text-[10px] text-cozy-brown/80 mt-1 block">
-                    Get a free key from Google AI Studio (aistudio.google.com).
+                    Optional. Leave blank to chat with the built-in mentor.
                   </span>
                 </div>
               ) : (
@@ -569,7 +574,7 @@ I can explain complex concepts step-by-step, review programming algorithms, help
                     className="w-full mt-1 px-3 py-2 rounded-xl border border-cozy-gold/40 bg-white dark:bg-darkSurface-bg text-xs"
                   />
                   <span className="text-[10px] text-cozy-brown/80 mt-1 block">
-                    Obtain your API key from platform.openai.com.
+                    Optional. Leave blank to chat with the built-in mentor.
                   </span>
                 </div>
               )}

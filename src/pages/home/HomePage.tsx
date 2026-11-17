@@ -128,13 +128,22 @@ export const HomePage: React.FC<HomePageProps> = ({
           </p>
         </div>
 
-        {/* User Sigil / Avatar button */}
+        {/* User Sigil / Custom Photo button */}
         <button
           type="button"
           onClick={() => onNavigateTab('profile')}
-          className="w-11 h-11 rounded-2xl bg-cozy-parchment dark:bg-darkSurface-card border border-cozy-gold/40 flex items-center justify-center text-xl shadow-sm hover:scale-105 transition-transform"
+          title="Open Profile & Settings"
+          className="w-11 h-11 rounded-2xl bg-cozy-parchment dark:bg-darkSurface-card border-2 border-cozy-gold/50 overflow-hidden flex items-center justify-center text-xl shadow-xs hover:scale-105 transition-transform cursor-pointer"
         >
-          {user.avatarId || '🌿'}
+          {user.photoUrl ? (
+            <img
+              src={user.photoUrl}
+              alt={user.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            user.avatarId || '🌿'
+          )}
         </button>
       </div>
 

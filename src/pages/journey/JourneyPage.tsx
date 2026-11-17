@@ -10,6 +10,7 @@ import {
   Plus,
   ShieldAlert,
   ChevronRight,
+  ArrowLeft,
 } from 'lucide-react';
 import { sounds } from '../../services/audio/soundEffects';
 import { haptic } from '../../services/haptic/hapticFeedback';
@@ -25,6 +26,7 @@ interface JourneyPageProps {
   currentRank: RankInfo;
   onClaimReward: (id: string) => void;
   onAddCustomReward?: (reward: RewardVaultItem) => void;
+  onBack?: () => void;
 }
 
 export const JourneyPage: React.FC<JourneyPageProps> = ({
@@ -35,6 +37,7 @@ export const JourneyPage: React.FC<JourneyPageProps> = ({
   currentRank,
   onClaimReward,
   onAddCustomReward,
+  onBack,
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<'rewards' | 'ranks' | 'calendar'>('rewards');
   const [showAddRewardModal, setShowAddRewardModal] = useState<boolean>(false);
@@ -77,7 +80,27 @@ export const JourneyPage: React.FC<JourneyPageProps> = ({
   );
 
   return (
-    <div className="pb-24 pt-4 px-4 max-w-lg mx-auto space-y-5 animate-fadeIn">
+    <div className="pb-24 pt-3 px-4 max-w-lg mx-auto space-y-4 animate-fadeIn">
+      {/* Top Header with Back Button */}
+      <div className="flex items-center justify-between">
+        {onBack ? (
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-cozy-parchment dark:bg-darkSurface-card border border-cozy-gold/30 hover:border-cozy-gold text-xs font-serif font-semibold text-cozy-forest dark:text-cozy-ivory shadow-xs transition-transform active:scale-95 cursor-pointer"
+          >
+            <ArrowLeft size={13} className="text-cozy-gold" />
+            <span>Back</span>
+          </button>
+        ) : (
+          <div />
+        )}
+        <span className="font-serif font-bold text-base text-cozy-forest dark:text-cozy-ivory">
+          My Journey & Rewards
+        </span>
+        <div className="w-12" />
+      </div>
+
       {/* 1. Header & Challenge Banner */}
       <div className="bg-gradient-to-br from-cozy-forest to-cozy-forestDark text-cozy-ivory rounded-3xl p-5 shadow-cozy-lg relative overflow-hidden">
         {/* Background Decorative Rings */}
@@ -266,10 +289,10 @@ export const JourneyPage: React.FC<JourneyPageProps> = ({
         <div className="space-y-4">
           <div>
             <h3 className="font-serif font-bold text-base text-cozy-forest dark:text-cozy-ivory">
-              Rank Ladder & Mastery Progression
+              Rank Ladder & Progression
             </h3>
             <p className="text-xs text-cozy-brown dark:text-darkSurface-textMuted">
-              Competitive Free Fire-style ranking infused with warm vintage aesthetics. Earn XP through honest effort.
+              Climb from Novice to Grandmaster as you earn XP through daily discipline.
             </p>
           </div>
 

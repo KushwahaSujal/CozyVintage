@@ -13,6 +13,7 @@ export type MascotMood =
 export interface UserProfile {
   name: string;
   avatarId: string;
+  photoUrl?: string;
   dob: string;
   age: number;
   interests: string[];

@@ -10,6 +10,7 @@ import {
   Sparkles,
   Download,
   Share2,
+  ArrowLeft,
 } from 'lucide-react';
 import { sounds } from '../../services/audio/soundEffects';
 import { haptic } from '../../services/haptic/hapticFeedback';
@@ -30,6 +31,7 @@ interface GrowthPageProps {
   habits: HabitItem[];
   lifetimeXp: number;
   streak: number;
+  onBack?: () => void;
 }
 
 export const GrowthPage: React.FC<GrowthPageProps> = ({
@@ -40,6 +42,7 @@ export const GrowthPage: React.FC<GrowthPageProps> = ({
   habits,
   lifetimeXp,
   streak,
+  onBack,
 }) => {
   const [subSection, setSubSection] = useState<'daily' | 'study' | 'habits' | 'hydration' | 'report'>('daily');
 
@@ -70,15 +73,25 @@ export const GrowthPage: React.FC<GrowthPageProps> = ({
   );
 
   return (
-    <div className="pb-24 pt-4 px-4 max-w-lg mx-auto space-y-5 animate-fadeIn">
-      {/* Header */}
-      <div>
-        <h2 className="font-serif font-bold text-2xl text-cozy-forest dark:text-cozy-ivory">
+    <div className="pb-24 pt-3 px-4 max-w-lg mx-auto space-y-4 animate-fadeIn">
+      {/* Top Header with Back Button */}
+      <div className="flex items-center justify-between">
+        {onBack ? (
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-cozy-parchment dark:bg-darkSurface-card border border-cozy-gold/30 hover:border-cozy-gold text-xs font-serif font-semibold text-cozy-forest dark:text-cozy-ivory shadow-xs transition-transform active:scale-95 cursor-pointer"
+          >
+            <ArrowLeft size={13} className="text-cozy-gold" />
+            <span>Back</span>
+          </button>
+        ) : (
+          <div />
+        )}
+        <span className="font-serif font-bold text-base text-cozy-forest dark:text-cozy-ivory">
           Growth & Analytics
-        </h2>
-        <p className="text-xs text-cozy-brown dark:text-darkSurface-textMuted mt-0.5">
-          Honest progress data, trends, and comprehensive challenge reports.
-        </p>
+        </span>
+        <div className="w-12" />
       </div>
 
       {/* Subsection Tab Bar */}
@@ -121,7 +134,7 @@ export const GrowthPage: React.FC<GrowthPageProps> = ({
               Today's Performance Breakdown
             </h3>
             <p className="text-[11px] text-cozy-brown dark:text-darkSurface-textMuted mb-4">
-              Real-time calculation from your active task records
+              Calculated from your activities today
             </p>
 
             <div className="flex items-center justify-around">
@@ -283,7 +296,7 @@ export const GrowthPage: React.FC<GrowthPageProps> = ({
               Habit Consistency Overview
             </h3>
             <p className="text-[11px] text-cozy-brown dark:text-darkSurface-textMuted mb-4">
-              Tracking your active streaks across custom lifestyle disciplines
+              Consistency across your daily personal habits
             </p>
 
             <div className="space-y-2.5">
@@ -357,10 +370,10 @@ export const GrowthPage: React.FC<GrowthPageProps> = ({
             <div className="flex items-center justify-between pb-4 border-b border-cozy-gold/30 mb-4">
               <div>
                 <span className="text-[10px] uppercase font-bold tracking-widest text-cozy-gold">
-                  Official Transformation Document
+                  Personal Milestone Report
                 </span>
                 <h3 className="font-serif font-bold text-xl text-cozy-forest dark:text-cozy-ivory">
-                  Your Personal Growth Journey Report
+                  Your Transformation Story
                 </h3>
                 <p className="text-xs text-cozy-brown dark:text-darkSurface-textMuted">
                   {challenge.durationDays}-Day Commitment • Prepared for {user.name}

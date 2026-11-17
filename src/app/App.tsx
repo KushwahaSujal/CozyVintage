@@ -12,6 +12,7 @@ import { sounds } from '../services/audio/soundEffects';
 import { haptic } from '../services/haptic/hapticFeedback';
 import { notificationService, type InAppNotification } from '../services/notification/notificationService';
 import { BottomNavigation, type NavigationTab } from '../components/navigation/BottomNavigation';
+import { TopBar } from '../components/navigation/TopBar';
 import { OnboardingWizard } from '../features/onboarding/OnboardingWizard';
 import { HomePage } from '../pages/home/HomePage';
 import { JourneyPage } from '../pages/journey/JourneyPage';
@@ -437,6 +438,13 @@ export const App: React.FC = () => {
         </div>
       )}
 
+      {/* Universal Top Header with Live Clock & Back Button */}
+      <TopBar
+        showBack={currentTab !== 'home'}
+        onBack={() => setCurrentTab('home')}
+        title="Cozy Vintage"
+      />
+
       {/* Main Pages Switcher */}
       <main className="min-h-screen">
         {currentTab === 'home' && (
@@ -471,6 +479,7 @@ export const App: React.FC = () => {
             currentRank={getCurrentRank()}
             onClaimReward={handleClaimReward}
             onAddCustomReward={handleAddCustomReward}
+            onBack={() => setCurrentTab('home')}
           />
         )}
 
@@ -483,6 +492,7 @@ export const App: React.FC = () => {
             habits={habits}
             lifetimeXp={lifetimeXp}
             streak={streak}
+            onBack={() => setCurrentTab('home')}
           />
         )}
 
@@ -492,6 +502,7 @@ export const App: React.FC = () => {
             challengeDay={challenge.currentDay}
             totalStudyMinutes={totalStudyMinutes}
             completionRate={completionRate}
+            onBack={() => setCurrentTab('home')}
           />
         )}
 
@@ -503,6 +514,7 @@ export const App: React.FC = () => {
             onResetAllData={handleResetAllData}
             onExportBackup={handleExportBackup}
             onImportBackup={handleImportBackup}
+            onBack={() => setCurrentTab('home')}
           />
         )}
       </main>

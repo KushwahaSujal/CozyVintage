@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { CozyMascot } from '../../components/mascot/CozyMascot';
 import { sounds } from '../../services/audio/soundEffects';
 import { haptic } from '../../services/haptic/hapticFeedback';
-import { Sparkles, ArrowRight, Check, Heart, Shield } from 'lucide-react';
+import { resizeImageToDataUrl } from '../../utils/imageUtils';
+import { Sparkles, ArrowRight, Check, Heart, Shield, Camera, Trash2 } from 'lucide-react';
 import type { UserProfile, ChallengeCommitment } from '../../types';
 
 interface OnboardingWizardProps {
@@ -39,7 +40,23 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
   // Step 1: About You
   const [name, setName] = useState<string>('');
   const [avatar, setAvatar] = useState<string>('🌿');
+  const [photoUrl, setPhotoUrl] = useState<string | undefined>(undefined);
   const [dob, setDob] = useState<string>('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        const resized = await resizeImageToDataUrl(file, 360);
+        setPhotoUrl(resized);
+        sounds.playClick();
+        haptic.medium();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
 
   // Step 2: Interests
   const [selectedInterests, setSelectedInterests] = useState<string[]>([
@@ -91,6 +108,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
     const profile: UserProfile = {
       name: name.trim() || 'Explorer Deep',
       avatarId: avatar,
+      photoUrl,
       dob,
       age: calculateAge(dob),
       interests: selectedInterests,
@@ -196,30 +214,68 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
               />
             </div>
 
-            {/* Avatar Select */}
+            {/* Avatar / Photo Select */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-cozy-forestDark dark:text-cozy-ivory uppercase tracking-wider">
-                Choose Your Companion Sigil
-              </label>
-              <div className="grid grid-cols-4 gap-2">
-                {AVATAR_OPTIONS.map((av) => (
-                  <button
-                    key={av}
-                    type="button"
-                    onClick={() => {
-                      setAvatar(av);
-                      sounds.playClick();
-                    }}
-                    className={`text-2xl p-2.5 rounded-xl border transition-all ${
-                      avatar === av
-                        ? 'border-cozy-sage bg-cozy-sage/20 dark:bg-cozy-sage/30 scale-105 shadow-sm'
-                        : 'border-cozy-parchmentDark dark:border-darkSurface-border bg-cozy-ivory dark:bg-darkSurface-card'
-                    }`}
-                  >
-                    {av}
-                  </button>
-                ))}
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-cozy-forestDark dark:text-cozy-ivory uppercase tracking-wider">
+                  Your Photo or Sigil
+                </label>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-[11px] text-cozy-gold hover:text-cozy-goldDark font-semibold flex items-center gap-1 cursor-pointer"
+                >
+                  <Camera size={12} />
+                  <span>{photoUrl ? 'Change Photo' : 'Upload Device Photo'}</span>
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  className="hidden"
+                />
               </div>
+
+              {photoUrl ? (
+                <div className="flex items-center space-x-3 p-2 rounded-2xl bg-cozy-ivory dark:bg-darkSurface-card border border-cozy-gold/40">
+                  <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-cozy-gold">
+                    <img src={photoUrl} alt="Preview" className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-serif font-bold text-cozy-forest dark:text-cozy-ivory block">
+                      Custom Photo Ready!
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setPhotoUrl(undefined)}
+                      className="text-[11px] text-red-500 hover:text-red-600 flex items-center gap-0.5 mt-0.5"
+                    >
+                      <Trash2 size={11} /> Use emoji instead
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-4 gap-2">
+                  {AVATAR_OPTIONS.map((av) => (
+                    <button
+                      key={av}
+                      type="button"
+                      onClick={() => {
+                        setAvatar(av);
+                        sounds.playClick();
+                      }}
+                      className={`text-2xl p-2 rounded-xl border transition-all ${
+                        avatar === av
+                          ? 'border-cozy-sage bg-cozy-sage/20 dark:bg-cozy-sage/30 scale-105 shadow-sm'
+                          : 'border-cozy-parchmentDark dark:border-darkSurface-border bg-cozy-ivory dark:bg-darkSurface-card'
+                      }`}
+                    >
+                      {av}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Date of Birth */}
