@@ -20,8 +20,16 @@ import { GrowthPage } from '../pages/growth/GrowthPage';
 import { AICompanionPage } from '../pages/ai-companion/AICompanionPage';
 import { ProfilePage } from '../pages/profile/ProfilePage';
 import { AuthPage } from '../pages/auth/AuthPage';
-import { getActiveSession, signOutUser } from '../services/supabase/supabaseClient';
-import { Shield, Sparkles, X, Lock } from 'lucide-react';
+import {
+  cleanOAuthUrlParams,
+  extractAuthUser,
+  extractOAuthCallbackError,
+  getActiveSession,
+  signOutUser,
+  subscribeToAuthChanges,
+  type AuthUserSummary,
+} from '../services/supabase/supabaseClient';
+import { Shield, X, Lock } from 'lucide-react';
 import type {
   UserProfile,
   ChallengeCommitment,
@@ -36,7 +44,8 @@ import type {
 export const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [currentTab, setCurrentTab] = useState<NavigationTab>('home');
-  const [authSession, setAuthSession] = useState<{ email: string; name?: string } | null>(null);
+  const [authSession, setAuthSession] = useState<AuthUserSummary | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   // Core State
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -56,20 +65,44 @@ export const App: React.FC = () => {
   // In-app notifications
   const [activeNotifications, setActiveNotifications] = useState<InAppNotification[]>([]);
 
-  // 1. Initial Load from IndexedDB & Supabase
+  // 1. Initial Load from IndexedDB & Supabase Auth
   useEffect(() => {
+    let isMounted = true;
+
+    // Check if returning from Google OAuth with an error (e.g., cancelled or misconfigured)
+    const callbackError = extractOAuthCallbackError();
+    if (callbackError) {
+      setAuthError(callbackError);
+    }
+
+    // Subscribe to Supabase auth state changes (OAuth redirects, token refresh, sign out)
+    const unsubscribeAuth = subscribeToAuthChanges((event, session) => {
+      if (!isMounted) return;
+
+      if (session?.user) {
+        setAuthSession(extractAuthUser(session.user));
+        setAuthError(null);
+        cleanOAuthUrlParams();
+      } else if (event === 'SIGNED_OUT') {
+        setAuthSession(null);
+        setCurrentTab('home');
+      }
+    });
+
     async function loadData() {
       try {
-        const session = await getActiveSession();
-        if (session?.user?.email) {
-          setAuthSession({
-            email: session.user.email,
-            name: (session.user.user_metadata?.name as string) || session.user.email.split('@')[0],
-          });
+        const { user: activeUser, error: sessionError } = await getActiveSession();
+        if (isMounted) {
+          if (sessionError) {
+            setAuthError(sessionError);
+          } else if (activeUser) {
+            setAuthSession(extractAuthUser(activeUser));
+            cleanOAuthUrlParams();
+          }
         }
 
         const existingUsers = await db.user.toArray();
-        if (existingUsers.length > 0) {
+        if (existingUsers.length > 0 && isMounted) {
           const profile = existingUsers[0];
           setUser(profile);
           sounds.setEnabled(profile.soundEnabled);
@@ -127,14 +160,20 @@ export const App: React.FC = () => {
       } catch (err) {
         console.warn('Failed loading data from IndexedDB:', err);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     }
     loadData();
 
     // Subscribe to notification reminders
     const unsub = notificationService.subscribe(setActiveNotifications);
-    return () => unsub();
+    return () => {
+      isMounted = false;
+      unsubscribeAuth();
+      unsub();
+    };
   }, []);
 
   // Compute Current Rank
@@ -193,7 +232,7 @@ export const App: React.FC = () => {
     setHydration(updated);
     try {
       await db.hydration.bulkPut(updated);
-    } catch {}
+    } catch { }
   };
 
   // Handlers for Study
@@ -204,7 +243,7 @@ export const App: React.FC = () => {
     setSubjects(updated);
     try {
       await db.subjects.bulkPut(updated);
-    } catch {}
+    } catch { }
   };
 
   // Handlers for Habits
@@ -223,7 +262,7 @@ export const App: React.FC = () => {
     setHabits(updated);
     try {
       await db.habits.bulkPut(updated);
-    } catch {}
+    } catch { }
   };
 
   const handleAddHabit = async (item: HabitItem) => {
@@ -231,7 +270,7 @@ export const App: React.FC = () => {
     setHabits(updated);
     try {
       await db.habits.put(item);
-    } catch {}
+    } catch { }
   };
 
   const handleDeleteHabit = async (id: string) => {
@@ -239,7 +278,7 @@ export const App: React.FC = () => {
     setHabits(updated);
     try {
       await db.habits.delete(id);
-    } catch {}
+    } catch { }
   };
 
   // Claim XP Button Handler
@@ -266,7 +305,7 @@ export const App: React.FC = () => {
     setRewards(updated);
     try {
       await db.rewards.bulkPut(updated);
-    } catch {}
+    } catch { }
   };
 
   const handleAddCustomReward = async (rew: RewardVaultItem) => {
@@ -274,7 +313,7 @@ export const App: React.FC = () => {
     setRewards(updated);
     try {
       await db.rewards.put(rew);
-    } catch {}
+    } catch { }
   };
 
   // Profile Update
@@ -282,7 +321,7 @@ export const App: React.FC = () => {
     setUser(updated);
     try {
       await db.user.put(updated);
-    } catch {}
+    } catch { }
   };
 
   // Backup Export
@@ -365,9 +404,14 @@ export const App: React.FC = () => {
   const handleLogout = async () => {
     sounds.playClick();
     haptic.light();
-    await signOutUser();
+    const { error } = await signOutUser();
     setAuthSession(null);
     setCurrentTab('home');
+    if (error) {
+      setAuthError(error);
+    } else {
+      setAuthError(null);
+    }
   };
 
   if (isLoading) {
@@ -388,14 +432,12 @@ export const App: React.FC = () => {
     );
   }
 
-  // 1. If not authenticated, display clean Auth Page
+  // 1. If not authenticated, display Google Auth Page
   if (!authSession) {
     return (
       <AuthPage
-        onAuthSuccess={(email, name) => {
-          setAuthSession({ email, name });
-          sounds.playClick();
-        }}
+        initialError={authError}
+        onClearError={() => setAuthError(null)}
       />
     );
   }
@@ -483,12 +525,12 @@ export const App: React.FC = () => {
           currentTab === 'journey'
             ? 'My Journey'
             : currentTab === 'growth'
-            ? 'Growth & Analytics'
-            : currentTab === 'ai'
-            ? 'AI Companion'
-            : currentTab === 'profile'
-            ? 'My Profile'
-            : 'Cozy Vintage'
+              ? 'Growth & Analytics'
+              : currentTab === 'ai'
+                ? 'AI Companion'
+                : currentTab === 'profile'
+                  ? 'My Profile'
+                  : 'Cozy Vintage'
         }
       />
 
